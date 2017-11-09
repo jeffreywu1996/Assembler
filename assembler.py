@@ -3,8 +3,8 @@
 # This program translates our assembly code into machine code.
 # Lab 2 for CSE 141L
 
-F_IN = "float2int.txt"
-F_OUT = "out.txt"
+
+import argparse
 
 # TODO: branches
 # TODO: does not handle random text in machine code that is not comment
@@ -37,10 +37,12 @@ def translate_params (param, debug_line=""):
     Return:
         returns the machine code portion of this parameter
     """
+    # Translate if params is a register
     if param in registers:
         return registers[param]
+    # Translate if params is a constant
     elif param.isdigit():
-        if int(param) >= 0 and int(param) < 8:
+        if int(param) >= 0 and int(param) < 8:  # Only 3 bits for constants
             return binary[param]
         else:
             raise Exception("Syntax error, constant: %d in '%s' is not supported" %(int(param), debug_line))
@@ -88,22 +90,37 @@ def translate_assembly (line):
     return machine_code
 
 
+def main():
+    # Parse arguments
+    parser = argparse.ArgumentParser()
+    parser.add_argument('assembly_file')
+    parser.add_argument('output_file')
+    args = parser.parse_args()
 
-# read in the file
-assembly_file = open(F_IN, 'r')
-contents = assembly_file.read()
+    F_IN = args.assembly_file
+    F_OUT = args.assembly_file
 
-# Data clean up
-contents = contents.splitlines() # split by line
-contents = filter(None, contents)  # remove empty lines
-# remove line comments
-contents = filter(lambda line: not line.startswith(';'), contents)
-# remove inline comments and trim whitespaces
-contents = [line.split(';')[0].strip() for line in contents]
+    # read in the file
+    assembly_file = open(F_IN, 'r')
+    contents = assembly_file.read()
 
-print contents
+    # Data clean up
+    contents = contents.splitlines() # split by line
+    contents = filter(None, contents)  # remove empty lines
+    # remove line comments
+    contents = filter(lambda line: not line.startswith(';'), contents)
+    # remove inline comments and trim whitespaces
+    contents = [line.split(';')[0].strip() for line in contents]
+    # remove lines with semicolons (branch labels)
+    contents = filter(lambda line: ':' not in line, contents)
 
-outfile = open(F_OUT, 'w')
-for line in contents:
-    print translate_assembly(line)
-    # outfile.write(translate(line))
+    print contents
+
+    outfile = open(F_OUT, 'w')
+    for line in contents:
+        print translate_assembly(line)
+        # outfile.write(translate(line))
+
+
+if __name__ == '__main__':
+    main()
